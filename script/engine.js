@@ -203,13 +203,10 @@ var Engine = {
 	},
 	
   exportImport: function() {
-    Events.startEvent({
-			title: 'Export / Import',
-			scenes: {
-				start: {
-					text: ['export or import save data, for backing up',
-					       'or migrating computers'],
-					buttons: {
+  	var gameSlot = +localStorage.gameSlot || 0;
+  	console.log(gameSlot);
+
+  	var buttons = {
 						'export': {
 							text: 'export',
 							onChoose: Engine.export64
@@ -218,11 +215,31 @@ var Engine = {
 							text: 'import',
 							nextScene: {1: 'confirm'},
 						},
-						'cancel': {
-							text: 'cancel',
-							nextScene: 'end'
+						'save': {
+							text: 'save backup',
+							onChoose: Engine.saveBackup
 						}
-					}
+					};
+
+	if (gameSlot > 0) {
+		buttons.load = {
+					text: 'load backup '+gameSlot,
+					onChoose: Engine.loadBackup,
+				};
+	}
+
+	buttons.cancel = {
+						text: 'cancel',
+						nextScene: 'end'
+					};
+
+    Events.startEvent({
+			title: 'Export / Import',
+			scenes: {
+				start: {
+					text: ['export or import save data, for backing up',
+					       'or migrating computers'],
+					buttons: buttons
 				},
 				'confirm': {
 					text: ['are you sure?',
@@ -243,7 +260,39 @@ var Engine = {
 			}
 		});
   },
+
+  saveBackup: function() {
+    Engine.saveGame();
+    var state = localStorage.gameState;
+    var gameSlot = +localStorage.gameSlot || 0;
+
+    //console.log(Score.calculateScore());
+
+    localStorage['gameSlot'+gameSlot] = state;
+    localStorage.gameSlot = gameSlot+1;
+
+    location.reload();
+
+  },
   
+  loadBackup: function() {
+  	console.log('loadBackup');
+
+    var gameSlot = +localStorage.gameSlot || 0;
+    gameSlot--;
+
+    var state = localStorage['gameSlot'+gameSlot];
+
+    if (state) {
+    	delete localStorage['gameSlot'+gameSlot];
+    	localStorage.gameSlot = gameSlot;
+
+    	localStorage.gameState = state;
+    	location.reload();
+    }
+    
+  },
+
   export64: function() {
     Engine.saveGame();
     var string64 = Base64.encode(localStorage.gameState);
